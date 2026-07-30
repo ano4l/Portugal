@@ -58,8 +58,10 @@ export function HomeHero() {
               visible: { opacity: 1, y: 0, transition: { duration: 0.72, ease } },
             }}
           >
-            Find the school.
-            <span>Picture the life.</span>
+            <span className="hero-title-line">Find the school.</span>
+            <span className="hero-title-line hero-title-flourish">
+              Picture the life.
+            </span>
           </motion.h1>
           <motion.p
             className="hero-intro"
