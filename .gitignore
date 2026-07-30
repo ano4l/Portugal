@@ -1,0 +1,50 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# local QA and generated artifacts
+*.log
+/artifacts/
+/qa-*.png
+
+# unused v0 prototype sources and placeholder media kept locally
+/components/fullpage-loader.tsx
+/components/new-project-slot.tsx
+/components/project-folder/
+/components/sidebar.tsx
+/components/theme-provider.tsx
+/components/ui/
+/contexts/
+/hooks/
+/lib/data.ts
+/lib/play-state-manager.ts
+/lib/utils.ts
+/styles/
+/public/*-portrait-*.png
+/public/placeholder*
+/public/professional-woman-avatar.png
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
