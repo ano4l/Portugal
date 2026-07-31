@@ -17,6 +17,7 @@ import Link from "next/link"
 import { FormEvent, useMemo, useState } from "react"
 import { trackEvent } from "@/lib/analytics"
 import { schools, type SchoolListing } from "@/lib/education-data"
+import { EducationMap } from "./education-map"
 import { ListingMedia } from "./listing-media"
 
 type FilterState = {
@@ -174,12 +175,18 @@ export function DirectoryExplorer({
   initialCurriculum = "",
   initialStage = "",
   initialType = "",
+  headerEyebrow = "The Portugal education directory",
+  title = "Find a place where your child can belong.",
+  introduction = "Compare verified schools, specialist support and enriching activities, with practical detail and a clear contact path.",
 }: {
   initialQuery?: string
   initialRegion?: string
   initialCurriculum?: string
   initialStage?: string
   initialType?: string
+  headerEyebrow?: string
+  title?: string
+  introduction?: string
 }) {
   const [query, setQuery] = useState(initialQuery)
   const [committedQuery, setCommittedQuery] = useState(initialQuery)
@@ -280,12 +287,9 @@ export function DirectoryExplorer({
       <section className="directory-header">
         <div className="shell directory-header-inner">
           <div>
-            <p className="eyebrow eyebrow-light">The Portugal education directory</p>
-            <h1>Find a place where your child can belong.</h1>
-            <p>
-              Compare verified schools, specialist support and enriching
-              activities, with practical detail and a clear contact path.
-            </p>
+            <p className="eyebrow eyebrow-light">{headerEyebrow}</p>
+            <h1>{title}</h1>
+            <p>{introduction}</p>
           </div>
           <form className="directory-search" onSubmit={submitSearch} role="search">
             <label htmlFor="directory-query">Search by school, place or curriculum</label>
@@ -460,29 +464,10 @@ export function DirectoryExplorer({
                 </div>
               ) : (
                 <div className="map-view" aria-label="Map showing matching institutions across Portugal">
-                  <div className="map-surface">
-                    <span className="map-coast" aria-hidden="true" />
-                    {results.map((school, index) => (
-                      <button
-                        className={`map-marker marker-${(index % 6) + 1}`}
-                        key={school.slug}
-                        type="button"
-                        title={school.name}
-                        onClick={() => setCommittedQuery(school.name)}
-                      >
-                        <span>{index + 1}</span>
-                        <strong>{school.name}</strong>
-                      </button>
-                    ))}
-                    <div className="map-key">
-                      <MapPin aria-hidden="true" />
-                      {results.length} matching {results.length === 1 ? "place" : "places"}
-                    </div>
-                  </div>
-                  <p>
-                    Select a numbered place to focus the results. Locations are
-                    indicative; open a profile for practical travel details.
-                  </p>
+                  <EducationMap
+                    listings={results}
+                    onSelect={(school) => setCommittedQuery(school.name)}
+                  />
                 </div>
               )}
             </div>

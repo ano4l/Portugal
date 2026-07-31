@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { HomeHero } from "@/components/education/home-hero"
 import { HomeProcessStory } from "@/components/education/home-process-story"
+import { EducationMap } from "@/components/education/education-map"
 import { NewsletterForm } from "@/components/education/newsletter-form"
 import { Reveal } from "@/components/education/reveal"
 import { articles, schools } from "@/lib/education-data"
@@ -125,13 +126,13 @@ export default function HomePage() {
                 title: "Schools",
                 text: "Present your learning culture clearly and speak with families already considering Portugal.",
                 icon: Building2,
-                href: "#partners",
+                href: "/advertise",
               },
               {
                 title: "Tutors",
                 text: "Help families find trusted academic, language, arts and specialist learning support.",
                 icon: GraduationCap,
-                href: "/directory?type=Tutoring%20centre",
+                href: "/tutors",
               },
               {
                 title: "Recruiters",
@@ -199,6 +200,24 @@ export default function HomePage() {
                 </div>
               </Link>
             ))}
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="section home-map-section" aria-labelledby="home-map-title">
+        <div className="shell">
+          <div className="home-map-heading">
+            <h2 id="home-map-title">See where a school day could begin.</h2>
+            <p>
+              Explore our current directory across Portugal, then open a profile
+              for the practical details behind each location.
+            </p>
+            <Link className="text-link" href="/directory">
+              Open the full directory <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+          <Reveal>
+            <EducationMap listings={schools} variant="home" />
           </Reveal>
         </div>
       </section>
@@ -301,9 +320,9 @@ export default function HomePage() {
               Put your institution in front of families who are ready to ask.
             </span>
           </div>
-          <a className="text-link text-link-light" href="mailto:info@educationinportugal.com?subject=Partnership enquiry">
+          <Link className="text-link text-link-light" href="/advertise">
             Talk to our partnerships editor <ArrowUpRight aria-hidden="true" />
-          </a>
+          </Link>
         </div>
       </section>
     </main>

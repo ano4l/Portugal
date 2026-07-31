@@ -1,18 +1,24 @@
 "use client"
 
 import * as Dialog from "@radix-ui/react-dialog"
-import { useReducedMotion } from "framer-motion"
 import { Menu, Phone, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
-const navigation = [
-  { href: "/", label: "Discover" },
-  { href: "/directory", label: "Schools & activities" },
+const primaryNavigation = [
+  { href: "/directory", label: "Schools" },
+  { href: "/tutors", label: "Tutors & support" },
   { href: "/jobs", label: "Jobs" },
-  { href: "/magazine", label: "Magazine" },
-  { href: "/#about", label: "About" },
+  { href: "/magazine", label: "Articles" },
+  { href: "/about", label: "About" },
+]
+
+const mobileNavigation = [
+  { href: "/", label: "Home" },
+  ...primaryNavigation,
+  { href: "/advertise", label: "Advertise with us" },
+  { href: "/contact", label: "Contact" },
 ]
 
 function Wordmark() {
@@ -27,45 +33,14 @@ function Wordmark() {
 
 export function SiteHeader() {
   const pathname = usePathname()
-  const reduceMotion = useReducedMotion()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [aboutActive, setAboutActive] = useState(false)
 
   useEffect(() => {
     setMobileOpen(false)
   }, [pathname])
 
-  useEffect(() => {
-    if (pathname !== "/") {
-      setAboutActive(false)
-      return
-    }
-
-    const about = document.getElementById("about")
-    if (!about) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setAboutActive(entry.isIntersecting),
-      { rootMargin: "-22% 0px -54% 0px", threshold: 0.08 },
-    )
-
-    observer.observe(about)
-    return () => observer.disconnect()
-  }, [pathname])
-
-  function handleAboutClick(event: React.MouseEvent<HTMLAnchorElement>) {
-    setMobileOpen(false)
-    if (pathname !== "/") return
-
-    const about = document.getElementById("about")
-    if (!about) return
-
-    event.preventDefault()
-    window.history.replaceState(null, "", "/#about")
-    about.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
-    })
+  function isActive(href: string) {
+    return href === "/" ? pathname === "/" : pathname.startsWith(href)
   }
 
   return (
@@ -74,13 +49,14 @@ export function SiteHeader() {
         <div className="shell utility-inner">
           <p>Independent guidance for families across Portugal</p>
           <div className="utility-links">
+            <Link href="/advertise">Advertise with us</Link>
+            <Link href="/contact">Contact</Link>
             <a href="tel:+351282341100">
               <Phone aria-hidden="true" size={14} />
               +351 282 341 100
             </a>
-            <span aria-hidden="true">•</span>
-            <span className="language-indicator" aria-label="Language: English">
-              EN
+            <span className="language-indicator" title="Language: English">
+              <span className="sr-only">Language: </span>EN
             </span>
           </div>
         </div>
@@ -92,22 +68,14 @@ export function SiteHeader() {
         </Link>
 
         <nav className="desktop-nav" aria-label="Primary navigation">
-          {navigation.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/" && !aboutActive
-                : item.href.startsWith("/#")
-                  ? pathname === "/" && aboutActive
-                  : pathname.startsWith(item.href)
+          {primaryNavigation.map((item) => {
+            const active = isActive(item.href)
             return (
               <Link
                 className={active ? "nav-link active" : "nav-link"}
                 href={item.href}
                 key={item.label}
-                onClick={item.href === "/#about" ? handleAboutClick : undefined}
-                aria-current={
-                  active ? (item.href === "/#about" ? "location" : "page") : undefined
-                }
+                aria-current={active ? "page" : undefined}
               >
                 {item.label}
               </Link>
@@ -146,29 +114,14 @@ export function SiteHeader() {
                 </Dialog.Close>
               </div>
               <nav className="mobile-nav" aria-label="Mobile navigation">
-                {navigation.map((item) => {
-                  const active =
-                    item.href === "/"
-                      ? pathname === "/" && !aboutActive
-                      : item.href === "/#about"
-                        ? pathname === "/" && aboutActive
-                        : pathname.startsWith(item.href)
-
+                {mobileNavigation.map((item) => {
+                  const active = isActive(item.href)
                   return (
                     <Dialog.Close asChild key={item.label}>
                       <Link
                         className={active ? "active" : undefined}
                         href={item.href}
-                        onClick={
-                          item.href === "/#about" ? handleAboutClick : undefined
-                        }
-                        aria-current={
-                          active
-                            ? item.href === "/#about"
-                              ? "location"
-                              : "page"
-                            : undefined
-                        }
+                        aria-current={active ? "page" : undefined}
                       >
                         {item.label}
                       </Link>

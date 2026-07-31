@@ -5522,3 +5522,444 @@ dd {
     transform: none !important;
   }
 }
+
+/* Navigation architecture, shared education map and contact routes */
+.utility-links > a + a,
+.utility-links > a + .language-indicator {
+  padding-left: 0.85rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.home-map-section {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  background: var(--warm-white);
+}
+
+.home-map-heading {
+  display: grid;
+  max-width: 760px;
+  gap: 1rem;
+  margin-bottom: var(--space-6);
+}
+
+.home-map-heading h2 {
+  margin: 0;
+  color: var(--maroon-dark);
+  font-size: var(--font-size-h2);
+}
+
+.home-map-heading p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-lg);
+}
+
+.home-map-heading .text-link {
+  width: max-content;
+}
+
+.education-map {
+  display: grid;
+  min-width: 0;
+}
+
+.education-map-home {
+  grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 28px 70px rgba(69, 16, 24, 0.1);
+}
+
+.education-map-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+}
+
+.education-map-panel-image {
+  position: relative;
+  min-height: 270px;
+  overflow: hidden;
+  background: var(--parchment);
+}
+
+.education-map-panel-image img {
+  object-fit: cover;
+}
+
+.education-map-panel-copy {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: clamp(1.5rem, 3vw, 2.4rem);
+}
+
+.education-map-panel-copy h3 {
+  margin: 0.8rem 0;
+  color: var(--maroon-dark);
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.education-map-panel-copy > p:not(.education-map-location) {
+  margin-bottom: 1.5rem;
+  color: var(--muted);
+}
+
+.education-map-panel-copy .text-link {
+  margin-top: auto;
+}
+
+.education-map-location {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  color: var(--maroon);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.education-map-location svg {
+  width: 16px;
+  height: 16px;
+}
+
+.education-map-stage-wrap {
+  min-width: 0;
+  padding: 1rem;
+  background: #f0ebe2;
+}
+
+.education-map-stage {
+  position: relative;
+  min-height: 620px;
+  overflow: hidden;
+  border: 1px solid #c9c2b6;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px) 0 0 / 72px 72px,
+    linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px) 0 0 / 72px 72px,
+    #b8d0ce;
+  isolation: isolate;
+}
+
+.education-map-stage::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 22%, rgba(255, 255, 255, 0.3), transparent 28%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 52%);
+  content: "";
+}
+
+.education-map-land {
+  position: absolute;
+  z-index: 0;
+  top: 5%;
+  left: 31%;
+  width: 43%;
+  height: 90%;
+  clip-path: polygon(34% 0, 62% 3%, 72% 14%, 66% 27%, 74% 40%, 66% 53%, 75% 64%, 70% 80%, 82% 94%, 57% 100%, 35% 94%, 30% 78%, 19% 64%, 28% 48%, 21% 31%, 30% 18%);
+  background:
+    linear-gradient(24deg, transparent 48%, rgba(104, 113, 90, 0.12) 49%, rgba(104, 113, 90, 0.12) 51%, transparent 52%) 0 0 / 80px 80px,
+    linear-gradient(-26deg, transparent 48%, rgba(104, 113, 90, 0.1) 49%, rgba(104, 113, 90, 0.1) 51%, transparent 52%) 0 0 / 110px 110px,
+    #e8dfd1;
+  box-shadow: 18px 12px 0 rgba(69, 16, 24, 0.08);
+}
+
+.education-map-ocean-label {
+  position: absolute;
+  top: 48%;
+  left: 7%;
+  transform: rotate(-90deg);
+  color: rgba(54, 91, 94, 0.62);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.education-map-region {
+  position: absolute;
+  z-index: 1;
+  color: rgba(69, 16, 24, 0.5);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.region-north { top: 10%; left: 62%; }
+.region-centre { top: 55%; left: 65%; }
+.region-south { top: 88%; left: 65%; }
+
+.education-map-marker {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  max-width: 190px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  transform: translate(-50%, -100%);
+  transition: transform 190ms var(--ease);
+}
+
+.education-map-marker:hover,
+.education-map-marker.active {
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 4px));
+}
+
+.education-map-marker > span {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--paper);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--maroon);
+  box-shadow: 0 6px 18px rgba(69, 16, 24, 0.25);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.education-map-marker > span::first-letter {
+  transform: rotate(45deg);
+}
+
+.education-map-marker strong {
+  display: none;
+  max-width: 145px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(114, 29, 43, 0.16);
+  background: rgba(255, 253, 249, 0.96);
+  box-shadow: 0 10px 24px rgba(69, 16, 24, 0.12);
+  color: var(--maroon-dark);
+  font-size: 0.65rem;
+  line-height: 1.3;
+}
+
+.education-map-marker:hover strong,
+.education-map-marker:focus-visible strong,
+.education-map-marker.active strong {
+  display: block;
+}
+
+.education-map-key {
+  position: absolute;
+  z-index: 6;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(114, 29, 43, 0.15);
+  background: rgba(255, 253, 249, 0.95);
+  color: var(--maroon-dark);
+  font-size: 0.68rem;
+}
+
+.education-map-key svg {
+  width: 18px;
+  color: var(--maroon);
+}
+
+.education-map-key strong {
+  margin-right: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.education-map-note {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.education-map-directory .education-map-stage-wrap {
+  padding: 0;
+  background: transparent;
+}
+
+.contact-page-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.35fr);
+  gap: clamp(2rem, 7vw, 7rem);
+  padding-block: var(--space-8);
+}
+
+.contact-page-grid aside h2 {
+  color: var(--maroon-dark);
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
+}
+
+.contact-page-grid aside p,
+.contact-page-grid aside li {
+  color: var(--muted);
+}
+
+.contact-page-grid aside a {
+  color: var(--maroon);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.contact-page-grid aside ul {
+  padding-left: 1.2rem;
+}
+
+.contact-form {
+  gap: 1.25rem;
+  padding: clamp(1.4rem, 4vw, 3rem);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow-soft);
+}
+
+.contact-form .form-field select {
+  width: 100%;
+  min-height: 50px;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid #aa9e91;
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+}
+
+.consent-field {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  color: #514945;
+  font-size: 0.75rem;
+}
+
+.consent-field input {
+  width: 18px;
+  height: 18px;
+  margin: 0.15rem 0 0;
+  accent-color: var(--maroon);
+}
+
+.contact-form-foot {
+  display: grid;
+  gap: 1rem;
+}
+
+.contact-form-foot .button {
+  width: max-content;
+}
+
+.form-success,
+.form-error {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.form-success { color: var(--success); }
+.form-error { color: var(--error); }
+.form-error a { text-decoration: underline; }
+
+@media (max-width: 1100px) {
+  .utility-links > a:first-child {
+    display: none;
+  }
+
+  .education-map-home {
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .education-map-home,
+  .contact-page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .education-map-home .education-map-stage-wrap {
+    order: -1;
+  }
+
+  .education-map-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .education-map-panel-image {
+    min-height: 320px;
+  }
+
+  .education-map-stage {
+    min-height: 560px;
+  }
+
+  .contact-page-grid {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .utility-inner > p,
+  .utility-links > a:not([href^="tel:"]) {
+    display: none;
+  }
+
+  .utility-inner {
+    justify-content: flex-end;
+  }
+
+  .education-map-stage-wrap {
+    padding: 0.65rem;
+  }
+
+  .education-map-stage {
+    min-height: 500px;
+  }
+
+  .education-map-land {
+    left: 23%;
+    width: 58%;
+  }
+
+  .education-map-region,
+  .education-map-ocean-label,
+  .education-map-marker strong {
+    display: none !important;
+  }
+
+  .education-map-marker > span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .education-map-key {
+    right: 0.65rem;
+    bottom: 0.65rem;
+  }
+
+  .education-map-panel-image {
+    min-height: 260px;
+  }
+
+  .contact-form {
+    padding: 1.25rem;
+  }
+
+  .contact-form-foot .button {
+    width: 100%;
+  }
+}

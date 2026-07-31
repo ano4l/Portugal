@@ -44,16 +44,16 @@ export function SiteFooter() {
         <div>
           <span className="footer-label">Discover</span>
           <Link href="/directory">Find a school</Link>
-          <Link href="/directory?type=Activity%20provider">Activities & tutors</Link>
+          <Link href="/tutors">Tutors & learning support</Link>
           <Link href="/jobs">Education jobs</Link>
-          <Link href="/magazine">Magazine</Link>
+          <Link href="/magazine">Articles & insights</Link>
         </div>
         <div>
           <span className="footer-label">For partners</span>
-          <Link href="/#partners">List your institution</Link>
+          <Link href="/advertise">List your institution</Link>
           <Link href="/jobs">Recruit educators</Link>
-          <Link href="/#partners">Advertise with us</Link>
-          <Link href="/#about">About the guide</Link>
+          <Link href="/advertise">Advertise with us</Link>
+          <Link href="/about">About the guide</Link>
         </div>
         <div>
           <span className="footer-label">Talk to us</span>
@@ -61,6 +61,7 @@ export function SiteFooter() {
           <a href="mailto:info@educationinportugal.com">
             info@educationinportugal.com
           </a>
+          <Link href="/contact">Contact page</Link>
           <p>Portugal<br />Monday-Friday</p>
         </div>
       </div>
