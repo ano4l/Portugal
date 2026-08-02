@@ -72,6 +72,7 @@ export function SiteFooter() {
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/accessibility">Accessibility</Link>
+          <Link href="/admin">Editorial Studio</Link>
         </div>
         <p>Independent. Useful. Made in Portugal.</p>
       </div>
