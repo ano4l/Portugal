@@ -22,10 +22,10 @@ import {
   Inbox,
   Languages,
   LayoutDashboard,
+  LogOut,
   Megaphone,
   Menu,
   MessageSquare,
-  MoreHorizontal,
   Plus,
   RotateCcw,
   Save,
@@ -43,6 +43,9 @@ import {
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { articles, jobs, schools, type SchoolListing, type EducationJob } from "@/lib/education-data"
+import { AdminAuth } from "./admin-auth"
+
+const adminSessionKey = "education-in-portugal-editorial-session"
 
 type View = "overview" | "articles" | "editor" | "directory" | "jobs" | "advertising" | "enquiries" | "settings"
 type ArticleStatus = "Published" | "Draft"
@@ -206,8 +209,8 @@ const initialAdPlacements: AdPlacement[] = [
     type: "Sponsored Article",
     placementSlot: "Magazine & Editorial Index",
     status: "In review",
-    impressions: "—",
-    clickRate: "—",
+    impressions: "Not available",
+    clickRate: "Not available",
   },
 ]
 
@@ -240,6 +243,41 @@ function EmptyMessage({ title, copy }: { title: string; copy: string }) {
 }
 
 export function AdminWorkspace() {
+  const [sessionReady, setSessionReady] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
+
+  useEffect(() => {
+    setAuthenticated(window.sessionStorage.getItem(adminSessionKey) === "authenticated")
+    setSessionReady(true)
+  }, [])
+
+  function signIn() {
+    window.sessionStorage.setItem(adminSessionKey, "authenticated")
+    window.scrollTo(0, 0)
+    setShowWelcome(true)
+    setAuthenticated(true)
+  }
+
+  function signOut() {
+    window.sessionStorage.removeItem(adminSessionKey)
+    window.scrollTo(0, 0)
+    setShowWelcome(false)
+    setAuthenticated(false)
+  }
+
+  if (!sessionReady) {
+    return <main className="admin-auth-loading" aria-label="Preparing Editorial Studio"><span /></main>
+  }
+
+  if (!authenticated) {
+    return <AdminAuth onSuccess={signIn} />
+  }
+
+  return <AdminDashboard onSignOut={signOut} welcome={showWelcome} />
+}
+
+function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome: boolean }) {
   const [view, setView] = useState<View>("overview")
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -291,7 +329,7 @@ export function AdminWorkspace() {
   const [selectedEnquiryId, setSelectedEnquiryId] = useState<number>(initialEnquiries[0].id)
   const [replyMessageText, setReplyMessageText] = useState("")
 
-  const [toast, setToast] = useState("")
+  const [toast, setToast] = useState(welcome ? "Welcome back, Marta. The editorial desk is ready." : "")
   const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
@@ -591,7 +629,6 @@ export function AdminWorkspace() {
 
         <div className="admin-studio-label">
           <span>Editorial studio</span>
-          <StatusPill tone="success">Active</StatusPill>
         </div>
 
         <nav className="admin-nav">
@@ -617,7 +654,9 @@ export function AdminWorkspace() {
             <strong>Marta Almeida</strong>
             <span>Managing editor</span>
           </div>
-          <MoreHorizontal aria-hidden="true" />
+          <button type="button" onClick={onSignOut} aria-label="Sign out">
+            <LogOut aria-hidden="true" />
+          </button>
         </div>
       </aside>
 
@@ -645,12 +684,16 @@ export function AdminWorkspace() {
             title={`${unreadCount} unread enquiries`}
           >
             <Bell aria-hidden="true" />
-            {unreadCount > 0 ? <span /> : null}
+            {unreadCount > 0 ? <span className="admin-unread-dot" /> : null}
           </button>
           <a href="/" target="_blank" rel="noreferrer">
             <Globe2 aria-hidden="true" />
             View website
           </a>
+          <button className="admin-sign-out" type="button" onClick={onSignOut} aria-label="Sign out">
+            <LogOut aria-hidden="true" />
+            <span>Sign out</span>
+          </button>
         </div>
       </header>
 
@@ -690,6 +733,10 @@ export function AdminWorkspace() {
                 </button>
               ))}
             </nav>
+            <div className="admin-drawer-actions">
+              <a href="/" target="_blank" rel="noreferrer"><Globe2 aria-hidden="true" />View website</a>
+              <button type="button" onClick={onSignOut}><LogOut aria-hidden="true" />Sign out</button>
+            </div>
           </aside>
         </div>
       ) : null}
@@ -823,7 +870,7 @@ export function AdminWorkspace() {
               setJobsList(jobs)
               setEnquiryList(initialEnquiries)
               setCalendarEvents(initialCalendarEvents)
-              setToast("Workspace reset to initial demo defaults")
+              setToast("Workspace reset to its initial defaults")
             }}
           />
         ) : null}
@@ -1079,6 +1126,9 @@ export function AdminWorkspace() {
                 </button>
               </Dialog.Close>
             </div>
+            <Dialog.Description>
+              Create a frontend-only campaign proposal and add it to the advertising workspace.
+            </Dialog.Description>
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -1094,8 +1144,8 @@ export function AdminWorkspace() {
                   type,
                   placementSlot: "Homepage · Primary Rotation",
                   status: "In review",
-                  impressions: "—",
-                  clickRate: "—",
+                  impressions: "Not available",
+                  clickRate: "Not available",
                 }
                 setAdPlacements((current) => [newAd, ...current])
                 setActiveModal(null)
@@ -1141,6 +1191,9 @@ export function AdminWorkspace() {
                 </button>
               </Dialog.Close>
             </div>
+            <Dialog.Description>
+              Add an outbound message to the local reader care inbox. No email will be sent.
+            </Dialog.Description>
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -1189,6 +1242,10 @@ export function AdminWorkspace() {
         <Dialog.Portal>
           <Dialog.Overlay className="admin-dialog-overlay" />
           <Dialog.Content className="admin-preview-dialog">
+            <Dialog.Title className="admin-visually-hidden">Article preview</Dialog.Title>
+            <Dialog.Description className="admin-visually-hidden">
+              Preview the current article as it will appear to readers.
+            </Dialog.Description>
             <div className="admin-preview-toolbar">
               <div>
                 <span>Article preview</span>
@@ -2438,7 +2495,7 @@ function SettingsView({
           <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
             <button className="admin-button admin-button-quiet" type="button" onClick={onReset}>
               <RotateCcw aria-hidden="true" />
-              Reset demo data to defaults
+              Reset workspace data to defaults
             </button>
           </div>
         </section>

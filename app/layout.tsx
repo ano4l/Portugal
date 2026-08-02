@@ -57,9 +57,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${sans.variable}`}>
-        <a className="skip-link" href="#main-content">
-          Skip to content
-        </a>
         <SiteShell>{children}</SiteShell>
         {process.env.VERCEL ? <Analytics /> : null}
       </body>

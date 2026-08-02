@@ -4,7 +4,7 @@ import "./admin.css"
 
 export const metadata: Metadata = {
   title: "Editorial studio",
-  description: "Education in Portugal editorial administration demo.",
+  description: "Education in Portugal editorial administration workspace.",
   robots: { index: false, follow: false },
 }
 

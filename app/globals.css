@@ -1533,6 +1533,35 @@ dd {
   color: var(--coral);
 }
 
+.footer-grid > div > .footer-studio-link {
+  display: grid;
+  width: min(100%, 300px);
+  min-height: 66px;
+  grid-template-columns: 22px minmax(0, 1fr) 18px;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(231, 124, 100, 0.42);
+  color: #fff;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.footer-studio-link > svg { width: 18px; color: var(--coral); }
+.footer-studio-link > svg:last-child { width: 15px; }
+.footer-studio-link > span { display: grid; gap: 0.2rem; }
+.footer-studio-link strong { font-size: 0.72rem; }
+.footer-studio-link small { color: #cbaead; font-size: 0.6rem; }
+
+.footer-grid > div > .footer-studio-link:hover {
+  border-color: var(--coral);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.footer-grid > div > .footer-studio-link:active { transform: translateY(0); }
+
 .footer-grid .newsletter-form {
   width: min(100%, 380px);
 }

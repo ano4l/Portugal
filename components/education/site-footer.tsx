@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, LayoutDashboard } from "lucide-react"
 import { NewsletterForm } from "./newsletter-form"
 
 export function SiteFooter() {
@@ -54,6 +54,11 @@ export function SiteFooter() {
           <Link href="/jobs">Recruit educators</Link>
           <Link href="/advertise">Advertise with us</Link>
           <Link href="/about">About the guide</Link>
+          <Link className="footer-studio-link" href="/admin">
+            <LayoutDashboard aria-hidden="true" />
+            <span><strong>Editorial Studio</strong><small>Manage the publishing workspace</small></span>
+            <ArrowUpRight aria-hidden="true" />
+          </Link>
         </div>
         <div>
           <span className="footer-label">Talk to us</span>
@@ -72,7 +77,6 @@ export function SiteFooter() {
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/accessibility">Accessibility</Link>
-          <Link href="/admin">Editorial Studio</Link>
         </div>
         <p>Independent. Useful. Made in Portugal.</p>
       </div>
