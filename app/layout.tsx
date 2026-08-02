@@ -1,9 +1,7 @@
 import type { Metadata } from "next"
 import { Cormorant_Garamond, Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { PageTransition } from "@/components/education/page-transition"
-import { SiteFooter } from "@/components/education/site-footer"
-import { SiteHeader } from "@/components/education/site-header"
+import { SiteShell } from "@/components/education/site-shell"
 import "./globals.css"
 
 const display = Cormorant_Garamond({
@@ -62,9 +60,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
-        <SiteHeader />
-        <PageTransition>{children}</PageTransition>
-        <SiteFooter />
+        <SiteShell>{children}</SiteShell>
         {process.env.VERCEL ? <Analytics /> : null}
       </body>
     </html>
