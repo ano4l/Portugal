@@ -1,10 +1,13 @@
 "use client"
 
-import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react"
+import { ArrowLeft, Check, Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/browser"
+
+const qaEmail = process.env.NEXT_PUBLIC_QA_EDITOR_EMAIL ?? ""
+const qaPassword = process.env.NEXT_PUBLIC_QA_EDITOR_PASSWORD ?? ""
 
 export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("")
@@ -12,6 +15,12 @@ export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  function useQaCredentials() {
+    setEmail(qaEmail)
+    setPassword(qaPassword)
+    setError("")
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -129,6 +138,18 @@ export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
               <span>Editorial access</span>
               <p>Accounts are managed securely through Supabase. Ask an administrator to invite you if you do not yet have access.</p>
             </div>
+            {qaEmail && qaPassword ? (
+              <>
+                <dl>
+                  <div><dt>Email</dt><dd>{qaEmail}</dd></div>
+                  <div><dt>Password</dt><dd>{qaPassword}</dd></div>
+                </dl>
+                <button type="button" onClick={useQaCredentials}>
+                  <Check aria-hidden="true" />
+                  Use QA access credentials
+                </button>
+              </>
+            ) : null}
           </aside>
         </div>
       </section>

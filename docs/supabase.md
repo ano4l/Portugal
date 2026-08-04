@@ -24,6 +24,16 @@ OPENAI_API_KEY=
 OPENAI_TRANSLATION_MODEL=gpt-5-mini
 ```
 
+For an explicitly public QA login button, configure:
+
+```text
+NEXT_PUBLIC_QA_EDITOR_EMAIL=
+NEXT_PUBLIC_QA_EDITOR_PASSWORD=
+```
+
+These two values are compiled into the browser bundle. Remove them before the
+Editorial Studio is treated as a private production surface.
+
 ## Database
 
 Apply migrations in filename order from `supabase/migrations/`. The initial
