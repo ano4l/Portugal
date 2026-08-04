@@ -11,12 +11,12 @@ import {
   Map,
   Sparkles,
 } from "lucide-react"
-import { HomeHero } from "@/components/education/home-hero"
-import { HomeProcessStory } from "@/components/education/home-process-story"
-import { EducationMap } from "@/components/education/education-map"
-import { NewsletterForm } from "@/components/education/newsletter-form"
-import { Reveal } from "@/components/education/reveal"
-import { articles, schools } from "@/lib/education-data"
+import { articles, schools } from "@/features/content/fallback-data"
+import { EducationMap } from "@/features/schools/components/education-map"
+import { HomeHero } from "@/features/site/components/home-hero"
+import { HomeProcessStory } from "@/features/site/components/home-process-story"
+import { NewsletterForm } from "@/features/site/components/newsletter-form"
+import { Reveal } from "@/features/site/components/reveal"
 
 const featuredSchools = schools.filter((school) => school.featured).slice(0, 4)
 

@@ -3,7 +3,7 @@
 import { ArrowRight, MapPin } from "lucide-react"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
-import { trackEvent } from "@/lib/analytics"
+import { trackEvent } from "@/features/shared/analytics"
 
 export function HomeSearch() {
   const router = useRouter()

@@ -9,7 +9,7 @@ import {
   useTransform,
 } from "framer-motion"
 import { useRef } from "react"
-import { HomeSearch } from "@/components/education/home-search"
+import { HomeSearch } from "./home-search"
 
 const ease = [0.16, 1, 0.3, 1] as const
 

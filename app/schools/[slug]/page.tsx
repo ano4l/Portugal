@@ -2,8 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, BadgeCheck, Mail, MapPin } from "lucide-react"
 import { notFound } from "next/navigation"
-import { ListingMedia } from "@/components/education/listing-media"
-import { schools } from "@/lib/education-data"
+import { schools } from "@/features/content/fallback-data"
+import { getPublishedSchools } from "@/features/content/published-content"
+import { ListingMedia } from "@/features/schools/components/listing-media"
 
 export function generateStaticParams() {
   return schools
@@ -17,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const school = schools.find((item) => item.slug === slug)
+  const school = (await getPublishedSchools()).find((item) => item.slug === slug)
 
   if (!school) return {}
 
@@ -34,7 +35,7 @@ export default async function SchoolNotesPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const school = schools.find((item) => item.slug === slug)
+  const school = (await getPublishedSchools()).find((item) => item.slug === slug)
   if (!school) notFound()
 
   const emailHref = `mailto:info@educationinportugal.com?subject=${encodeURIComponent(
@@ -96,6 +97,14 @@ export default async function SchoolNotesPage({
               <div>
                 <dt>Support</dt>
                 <dd>{school.support.length ? school.support.join(", ") : "Ask the provider"}</dd>
+              </div>
+              <div>
+                <dt>Tuition guidance</dt>
+                <dd>
+                  {school.tuitionFrom || school.tuitionTo
+                    ? `€${school.tuitionFrom?.toLocaleString() ?? "—"}–€${school.tuitionTo?.toLocaleString() ?? "—"} ${school.feeYear ? `(${school.feeYear})` : "per year"}`
+                    : "Contact the school for current fees"}
+                </dd>
               </div>
             </dl>
             <div className="generic-profile-note">

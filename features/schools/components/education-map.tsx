@@ -3,7 +3,7 @@
 import { ArrowRight, MapPin, Navigation } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { type SchoolListing } from "@/lib/education-data"
+import { type SchoolListing } from "@/features/content/fallback-data"
 import { ListingMedia } from "./listing-media"
 
 const markerPositions: Record<string, { left: string; top: string }> = {
@@ -14,6 +14,16 @@ const markerPositions: Record<string, { left: string; top: string }> = {
   "algarve-arts-academy": { left: "59%", top: "80%" },
   "warehouse-mothership": { left: "54%", top: "42%" },
   "porto-bilingual-learning-centre": { left: "48%", top: "18%" },
+}
+
+function geographicPosition(school: SchoolListing) {
+  if (school.latitude == null || school.longitude == null) return null
+  const left = ((school.longitude - -9.6) / (-6.1 - -9.6)) * 100
+  const top = ((42.2 - school.latitude) / (42.2 - 36.8)) * 100
+  return {
+    left: `${Math.min(92, Math.max(8, left))}%`,
+    top: `${Math.min(92, Math.max(8, top))}%`,
+  }
 }
 
 function profileHref(school: SchoolListing) {
@@ -102,7 +112,7 @@ export function EducationMap({
           </span>
 
           {listings.map((school, index) => {
-            const position = markerPositions[school.slug] ?? {
+            const position = geographicPosition(school) ?? markerPositions[school.slug] ?? {
               left: `${42 + (index % 3) * 8}%`,
               top: `${28 + (index % 5) * 11}%`,
             }

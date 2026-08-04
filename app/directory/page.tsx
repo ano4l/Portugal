@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import { DirectoryExplorer } from "@/components/education/directory-explorer"
+import { getPublishedSchools } from "@/features/content/published-content"
+import { DirectoryExplorer } from "@/features/schools/components/directory-explorer"
 
 export const metadata: Metadata = {
   title: "School & activity directory",
@@ -26,10 +27,12 @@ export default async function DirectoryPage({
   searchParams: Promise<DirectorySearchParams>
 }) {
   const params = await searchParams
+  const listings = await getPublishedSchools()
 
   return (
     <main id="main-content">
       <DirectoryExplorer
+        listings={listings}
         initialQuery={valueOf(params.query)}
         initialRegion={valueOf(params.region)}
         initialCurriculum={valueOf(params.curriculum)}

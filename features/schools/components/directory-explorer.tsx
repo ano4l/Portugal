@@ -15,8 +15,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { FormEvent, useMemo, useState } from "react"
-import { trackEvent } from "@/lib/analytics"
-import { schools, type SchoolListing } from "@/lib/education-data"
+import { schools, type SchoolListing } from "@/features/content/fallback-data"
+import { trackEvent } from "@/features/shared/analytics"
 import { EducationMap } from "./education-map"
 import { ListingMedia } from "./listing-media"
 
@@ -178,6 +178,7 @@ export function DirectoryExplorer({
   headerEyebrow = "The Portugal education directory",
   title = "Find a place where your child can belong.",
   introduction = "Compare verified schools, specialist support and enriching activities, with practical detail and a clear contact path.",
+  listings = schools,
 }: {
   initialQuery?: string
   initialRegion?: string
@@ -187,6 +188,7 @@ export function DirectoryExplorer({
   headerEyebrow?: string
   title?: string
   introduction?: string
+  listings?: SchoolListing[]
 }) {
   const [query, setQuery] = useState(initialQuery)
   const [committedQuery, setCommittedQuery] = useState(initialQuery)
@@ -240,7 +242,7 @@ export function DirectoryExplorer({
 
   const results = useMemo(() => {
     const normalizedQuery = committedQuery.toLocaleLowerCase()
-    const filtered = schools.filter((school) => {
+    const filtered = listings.filter((school) => {
       const text = [
         school.name,
         school.location,
@@ -276,7 +278,7 @@ export function DirectoryExplorer({
       return [...filtered].sort((a, b) => a.region.localeCompare(b.region))
     }
     return [...filtered].sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)))
-  }, [committedQuery, filters, sort])
+  }, [committedQuery, filters, listings, sort])
 
   const applied = (Object.entries(filters) as Array<[keyof FilterState, string[]]>).flatMap(
     ([group, values]) => values.map((value) => ({ group, value })),

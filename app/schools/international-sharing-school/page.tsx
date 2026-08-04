@@ -14,8 +14,8 @@ import {
   Users,
   WalletCards,
 } from "lucide-react"
-import { EnquiryActions } from "@/components/education/enquiry-actions"
-import { schools } from "@/lib/education-data"
+import { schools } from "@/features/content/fallback-data"
+import { EnquiryActions } from "@/features/schools/components/enquiry-actions"
 
 const school = schools[0]
 

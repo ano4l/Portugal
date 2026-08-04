@@ -42,12 +42,12 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
-import { articles, jobs, schools, type SchoolListing, type EducationJob } from "@/lib/education-data"
+import { articles, jobs, schools, type SchoolListing, type EducationJob } from "@/features/content/fallback-data"
+import { createClient } from "@/lib/supabase/browser"
+import { hasPublicSupabaseConfig } from "@/lib/supabase/config"
 import { AdminAuth } from "./admin-auth"
 
-const adminSessionKey = "education-in-portugal-editorial-session"
-
-type View = "overview" | "articles" | "editor" | "directory" | "jobs" | "advertising" | "enquiries" | "settings"
+type View = "overview" | "articles" | "editor" | "directory" | "magazines" | "jobs" | "advertising" | "enquiries" | "settings"
 type ArticleStatus = "Published" | "Draft"
 
 type EditableArticle = {
@@ -61,6 +61,12 @@ type EditableArticle = {
   body: string
   seoTitle: string
   seoDescription: string
+  titlePt: string
+  excerptPt: string
+  bodyPt: string
+  seoTitlePt: string
+  seoDescriptionPt: string
+  linkPolicy: "follow" | "nofollow"
   status: ArticleStatus
   updated: string
 }
@@ -72,7 +78,7 @@ type EnquiryReply = {
 }
 
 type Enquiry = {
-  id: number
+  id: string | number
   name: string
   email: string
   subject: string
@@ -104,12 +110,48 @@ type AdPlacement = {
   clickRate: string
 }
 
+type EditableMagazine = {
+  id: string
+  slug: string
+  title: string
+  issueNumber: string
+  coverDate: string
+  description: string
+  coverImageUrl: string
+  documentUrl: string
+  externalReaderUrl: string
+  status: "Published" | "Draft"
+  featured: boolean
+  allowDownload: boolean
+}
+
+const initialMagazines: EditableMagazine[] = [{
+  id: "edition-2",
+  slug: "edition-2",
+  title: "Education in Portugal — Edition 2",
+  issueNumber: "02",
+  coverDate: "2026-07-01",
+  description: "Independent school guidance and family perspectives from across Portugal.",
+  coverImageUrl: "/education/magazine-edition-2.png",
+  documentUrl: "",
+  externalReaderUrl: "",
+  status: "Published",
+  featured: true,
+  allowDownload: true,
+}]
+
 const initialArticles: EditableArticle[] = articles.map((article, index) => ({
   ...article,
   author: index === 0 ? "Marta Almeida" : index === 1 ? "Clara Monteiro" : "Sofia Mendes",
   body: `${article.excerpt}\n\nChoosing an education path in Portugal is about more than comparing curricula. It is about understanding how a school fits the rhythm, language and ambitions of your family.\n\nStart with the practical questions, visit with an open mind and give children space to share what they notice. The right environment should feel both reassuring and full of possibility.`,
   seoTitle: article.title,
   seoDescription: article.excerpt,
+  titlePt: "",
+  excerptPt: "",
+  bodyPt: "",
+  seoTitlePt: "",
+  seoDescriptionPt: "",
+  linkPolicy: "follow",
   status: index === 2 ? "Draft" : "Published",
   updated: index === 0 ? "Today, 10:24" : index === 1 ? "Yesterday, 16:40" : "28 July 2026",
 }))
@@ -218,6 +260,7 @@ const navigation: { id: View; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "articles", label: "Articles", icon: BookOpen },
   { id: "directory", label: "Directory", icon: UsersRound },
+  { id: "magazines", label: "Magazines", icon: BookOpen },
   { id: "jobs", label: "Jobs", icon: BriefcaseBusiness },
   { id: "advertising", label: "Advertising", icon: Megaphone },
   { id: "enquiries", label: "Enquiries", icon: Inbox },
@@ -248,19 +291,34 @@ export function AdminWorkspace() {
   const [showWelcome, setShowWelcome] = useState(false)
 
   useEffect(() => {
-    setAuthenticated(window.sessionStorage.getItem(adminSessionKey) === "authenticated")
-    setSessionReady(true)
+    if (!hasPublicSupabaseConfig()) {
+      setSessionReady(true)
+      return
+    }
+
+    const supabase = createClient()
+    void supabase.auth.getUser().then(({ data }) => {
+      setAuthenticated(Boolean(data.user))
+      setSessionReady(true)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthenticated(Boolean(session?.user))
+    })
+
+    return () => listener.subscription.unsubscribe()
   }, [])
 
   function signIn() {
-    window.sessionStorage.setItem(adminSessionKey, "authenticated")
     window.scrollTo(0, 0)
     setShowWelcome(true)
     setAuthenticated(true)
   }
 
-  function signOut() {
-    window.sessionStorage.removeItem(adminSessionKey)
+  async function signOut() {
+    if (hasPublicSupabaseConfig()) {
+      await createClient().auth.signOut()
+    }
     window.scrollTo(0, 0)
     setShowWelcome(false)
     setAuthenticated(false)
@@ -286,6 +344,7 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
   const [editingArticle, setEditingArticle] = useState<EditableArticle>(initialArticles[0])
   const [schoolsList, setSchoolsList] = useState<SchoolListing[]>(schools)
   const [jobsList, setJobsList] = useState<EducationJob[]>(jobs)
+  const [magazineList, setMagazineList] = useState<EditableMagazine[]>(initialMagazines)
   const [enquiryList, setEnquiryList] = useState<Enquiry[]>(initialEnquiries)
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(initialCalendarEvents)
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>(initialAdPlacements)
@@ -318,6 +377,7 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     | "add-school"
     | "edit-school"
     | "add-job"
+    | "add-magazine"
     | "edit-job"
     | "add-event"
     | "add-placement"
@@ -326,11 +386,168 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
 
   const [selectedSchool, setSelectedSchool] = useState<SchoolListing | null>(null)
   const [selectedJob, setSelectedJob] = useState<EducationJob | null>(null)
-  const [selectedEnquiryId, setSelectedEnquiryId] = useState<number>(initialEnquiries[0].id)
+  const [selectedEnquiryId, setSelectedEnquiryId] = useState<string | number>(initialEnquiries[0].id)
   const [replyMessageText, setReplyMessageText] = useState("")
 
   const [toast, setToast] = useState(welcome ? "Welcome back, Marta. The editorial desk is ready." : "")
   const [previewOpen, setPreviewOpen] = useState(false)
+
+  useEffect(() => {
+    if (!hasPublicSupabaseConfig()) return
+
+    const supabase = createClient()
+    void Promise.all([
+      supabase.from("articles").select("*").order("updated_at", { ascending: false }),
+      supabase.from("schools").select("*").order("updated_at", { ascending: false }),
+      supabase.from("jobs").select("*").order("updated_at", { ascending: false }),
+      supabase.from("magazines").select("*").order("cover_date", { ascending: false }),
+      supabase.from("leads").select("*").order("created_at", { ascending: false }),
+    ]).then(([articleResult, schoolResult, jobResult, magazineResult, leadResult]) => {
+      if (articleResult.data?.length) {
+        setArticleLibrary(articleResult.data.map((record) => ({
+          slug: record.slug,
+          title: record.title?.en ?? "",
+          titlePt: record.title?.pt ?? "",
+          category: record.category,
+          excerpt: record.excerpt?.en ?? "",
+          excerptPt: record.excerpt?.pt ?? "",
+          image: record.hero_image_url ?? "/education/article-moving-schools.webp",
+          readingTime: record.reading_time ?? "4 min read",
+          author: record.author,
+          body: record.body?.en ?? "",
+          bodyPt: record.body?.pt ?? "",
+          seoTitle: record.seo_title?.en ?? "",
+          seoTitlePt: record.seo_title?.pt ?? "",
+          seoDescription: record.seo_description?.en ?? "",
+          seoDescriptionPt: record.seo_description?.pt ?? "",
+          linkPolicy: record.link_policy === "nofollow" ? "nofollow" : "follow",
+          status: record.status === "published" ? "Published" : "Draft",
+          updated: new Date(record.updated_at).toLocaleString("en-GB"),
+        })))
+      }
+
+      if (schoolResult.data?.length) {
+        setSchoolsList(schoolResult.data.map((record) => ({
+          slug: record.slug,
+          name: record.name,
+          location: record.address,
+          region: record.region as SchoolListing["region"],
+          stages: record.stages ?? [],
+          curriculum: record.curricula ?? [],
+          languages: record.languages ?? [],
+          type: record.provider_type ?? "International school",
+          support: record.support_services ?? [],
+          differentiator: record.summary?.en ?? "",
+          image: record.cover_image_url ?? "",
+          verified: record.verified,
+          featured: record.featured,
+          tuitionFrom: record.tuition_from ?? undefined,
+          tuitionTo: record.tuition_to ?? undefined,
+          latitude: record.latitude ?? undefined,
+          longitude: record.longitude ?? undefined,
+          websiteUrl: record.website_url ?? undefined,
+          admissionsEmail: record.admissions_email ?? undefined,
+          telephone: record.telephone ?? undefined,
+          feeYear: record.fee_year ?? undefined,
+          prospectusUrl: record.prospectus_url ?? undefined,
+        })))
+      }
+
+      if (jobResult.data?.length) {
+        setJobsList(jobResult.data.map((record) => ({
+          id: record.slug,
+          title: record.title?.en ?? "",
+          institution: record.institution,
+          location: record.location,
+          role: record.category,
+          type: record.employment_type,
+          posted: new Date(record.created_at).toLocaleDateString("en-GB"),
+          closes: record.closes_at ? new Date(record.closes_at).toLocaleDateString("en-GB") : "Open",
+          summary: record.summary?.en ?? "",
+          featured: record.featured,
+        })))
+      }
+
+      if (magazineResult.data?.length) {
+        setMagazineList(magazineResult.data.map((record) => ({
+          id: record.id,
+          slug: record.slug,
+          title: record.title?.en ?? "",
+          issueNumber: record.issue_number,
+          coverDate: record.cover_date ?? "",
+          description: record.description?.en ?? "",
+          coverImageUrl: record.cover_image_url ?? "",
+          documentUrl: record.document_url ?? "",
+          externalReaderUrl: record.external_reader_url ?? "",
+          status: record.status === "published" ? "Published" : "Draft",
+          featured: record.featured,
+          allowDownload: record.allow_download,
+        })))
+      }
+      if (leadResult.data?.length) {
+        const loadedLeads: Enquiry[] = leadResult.data.map((record) => ({
+          id: record.id,
+          name: record.name,
+          email: record.email,
+          subject: record.subject || "Website enquiry",
+          type: record.source === "school_enquiry" ? "Family enquiry" : record.source === "advertising_form" ? "Partnership" : "Recruitment",
+          time: new Date(record.created_at).toLocaleString("en-GB"),
+          unread: record.status === "new",
+          starred: false,
+          replied: ["contacted", "qualified", "referred", "converted", "closed"].includes(record.status),
+          message: record.message,
+          replies: [],
+        }))
+        setEnquiryList(loadedLeads)
+        setSelectedEnquiryId(loadedLeads[0].id)
+      }
+    })
+  }, [])
+
+  async function handleSaveMagazine(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = new FormData(e.currentTarget)
+    const title = String(form.get("title") || "Untitled edition")
+    const issueNumber = String(form.get("issueNumber") || "")
+    const slug = `edition-${issueNumber.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
+    const magazine: EditableMagazine = {
+      id: slug,
+      slug,
+      title,
+      issueNumber,
+      coverDate: String(form.get("coverDate") || ""),
+      description: String(form.get("description") || ""),
+      coverImageUrl: String(form.get("coverImageUrl") || ""),
+      documentUrl: String(form.get("documentUrl") || ""),
+      externalReaderUrl: String(form.get("externalReaderUrl") || ""),
+      status: form.get("status") === "published" ? "Published" : "Draft",
+      featured: form.get("featured") === "on",
+      allowDownload: form.get("allowDownload") === "on",
+    }
+    setMagazineList((current) => [magazine, ...current.filter((item) => item.slug !== slug)])
+    setActiveModal(null)
+
+    if (hasPublicSupabaseConfig()) {
+      const supabase = createClient()
+      const { data: authData } = await supabase.auth.getUser()
+      const { error } = await supabase.from("magazines").upsert({
+        slug,
+        title: { en: magazine.title, pt: "" },
+        description: { en: magazine.description, pt: "" },
+        issue_number: magazine.issueNumber,
+        cover_date: magazine.coverDate || null,
+        cover_image_url: magazine.coverImageUrl || null,
+        document_url: magazine.documentUrl || null,
+        external_reader_url: magazine.externalReaderUrl || null,
+        allow_download: magazine.allowDownload,
+        featured: magazine.featured,
+        status: magazine.status === "Published" ? "published" : "draft",
+        updated_by: authData.user?.id,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "slug" })
+      setToast(error ? `Magazine could not be saved: ${error.message}` : `${title} saved to the digital library`)
+    }
+  }
 
   useEffect(() => {
     if (!toast) return
@@ -418,6 +635,12 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
       body: "Choosing an education path in Portugal starts with asking the right questions.",
       seoTitle: "Untitled editorial guide",
       seoDescription: "Add a clear introduction for readers.",
+      titlePt: "",
+      excerptPt: "",
+      bodyPt: "",
+      seoTitlePt: "",
+      seoDescriptionPt: "",
+      linkPolicy: "follow",
       status: "Draft",
       updated: "Just created",
     }
@@ -427,13 +650,38 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     setToast("New article draft created")
   }
 
-  function saveArticle() {
+  async function saveArticle() {
     const updated = { ...editingArticle, updated: "Just now" }
     setEditingArticle(updated)
     setArticleLibrary((current) =>
       current.map((item) => (item.slug === updated.slug ? updated : item))
     )
     setToast("Article changes saved")
+
+    if (hasPublicSupabaseConfig()) {
+      const supabase = createClient()
+      const { data: authData } = await supabase.auth.getUser()
+      const { error } = await supabase.from("articles").upsert({
+        slug: updated.slug,
+        title: { en: updated.title, pt: updated.titlePt },
+        excerpt: { en: updated.excerpt, pt: updated.excerptPt },
+        body: { en: updated.body, pt: updated.bodyPt },
+        category: updated.category,
+        author: updated.author,
+        hero_image_url: updated.image,
+        hero_image_alt: { en: updated.title, pt: updated.titlePt },
+        seo_title: { en: updated.seoTitle, pt: updated.seoTitlePt },
+        seo_description: { en: updated.seoDescription, pt: updated.seoDescriptionPt },
+        reading_time: updated.readingTime,
+        link_policy: updated.linkPolicy,
+        status: updated.status === "Published" ? "published" : "draft",
+        published_at: updated.status === "Published" ? new Date().toISOString() : null,
+        updated_by: authData.user?.id,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "slug" })
+
+      setToast(error ? `Article could not be published: ${error.message}` : "Article saved to Supabase")
+    }
   }
 
   function duplicateArticle(article: EditableArticle) {
@@ -454,7 +702,7 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
   }
 
   // School handlers
-  function handleSaveSchool(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveSchool(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
     const name = (form.get("name") as string) || "Untitled School"
@@ -462,13 +710,33 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     const region = (form.get("region") as SchoolListing["region"]) || "Lisbon"
     const type = (form.get("type") as string) || "International school"
     const differentiator = (form.get("differentiator") as string) || "Verified education provider record."
+    const list = (name: string) => String(form.get(name) ?? "").split(",").map((item) => item.trim()).filter(Boolean)
+    const number = (name: string) => {
+      const value = String(form.get(name) ?? "").trim()
+      return value ? Number(value) : undefined
+    }
+    const schoolDetails = {
+      stages: list("stages"),
+      curriculum: list("curriculum"),
+      languages: list("languages"),
+      support: list("support"),
+      tuitionFrom: number("tuitionFrom"),
+      tuitionTo: number("tuitionTo"),
+      latitude: number("latitude"),
+      longitude: number("longitude"),
+      websiteUrl: String(form.get("websiteUrl") ?? ""),
+      admissionsEmail: String(form.get("admissionsEmail") ?? ""),
+      telephone: String(form.get("telephone") ?? ""),
+      feeYear: String(form.get("feeYear") ?? ""),
+      image: String(form.get("image") ?? "") || selectedSchool?.image || "/education/international-sharing-school.webp",
+    }
 
     if (selectedSchool) {
       // Edit existing
       setSchoolsList((current) =>
         current.map((item) =>
           item.slug === selectedSchool.slug
-            ? { ...item, name, location, region, type, differentiator, verified: true }
+            ? { ...item, name, location, region, type, differentiator, verified: true, ...schoolDetails }
             : item
         )
       )
@@ -480,13 +748,9 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
         name,
         location,
         region,
-        stages: ["Primary", "Secondary"],
-        curriculum: ["IB"],
-        languages: ["English", "Portuguese"],
         type,
-        support: ["Learning support"],
         differentiator,
-        image: "/education/international-sharing-school.webp",
+        ...schoolDetails,
         verified: true,
       }
       setSchoolsList((current) => [newSchool, ...current])
@@ -494,6 +758,39 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     }
     setActiveModal(null)
     setSelectedSchool(null)
+
+    if (hasPublicSupabaseConfig()) {
+      const supabase = createClient()
+      const { data: authData } = await supabase.auth.getUser()
+      const slug = selectedSchool?.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      const { error } = await supabase.from("schools").upsert({
+        slug,
+        name,
+        summary: { en: differentiator, pt: "" },
+        description: { en: differentiator, pt: "" },
+        address: location,
+        region,
+        provider_type: type,
+        latitude: schoolDetails.latitude,
+        longitude: schoolDetails.longitude,
+        website_url: schoolDetails.websiteUrl || null,
+        telephone: schoolDetails.telephone || null,
+        admissions_email: schoolDetails.admissionsEmail || null,
+        tuition_from: schoolDetails.tuitionFrom,
+        tuition_to: schoolDetails.tuitionTo,
+        fee_year: schoolDetails.feeYear || null,
+        stages: schoolDetails.stages,
+        curricula: schoolDetails.curriculum,
+        languages: schoolDetails.languages,
+        support_services: schoolDetails.support,
+        cover_image_url: schoolDetails.image,
+        verified: true,
+        status: "published",
+        updated_by: authData.user?.id,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "slug" })
+      setToast(error ? `School could not be saved: ${error.message}` : `${name} is live in the directory and map`)
+    }
   }
 
   function toggleSchoolVerified(slug: string) {
@@ -511,7 +808,7 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
   }
 
   // Job handlers
-  function handleSaveJob(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveJob(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
     const title = (form.get("title") as string) || "Education Role"
@@ -520,33 +817,64 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     const role = (form.get("role") as string) || "Teaching"
     const closes = (form.get("closes") as string) || "31 Aug 2026"
     const salary = (form.get("salary") as string) || "Competitive"
+    const type = (form.get("employmentType") as string) || "Full time"
+    const summary = (form.get("summary") as string) || `${title} position at ${institution}.`
+    const applicationEmail = String(form.get("applicationEmail") ?? "")
+    const applicationUrl = String(form.get("applicationUrl") ?? "")
+    const slug = selectedJob?.id || title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
 
     if (selectedJob) {
       setJobsList((current) =>
         current.map((item) =>
           item.id === selectedJob.id
-            ? { ...item, title, institution, location, role, closes }
+            ? { ...item, title, institution, location, role, closes, type, summary, salary, applicationEmail, applicationUrl }
             : item
         )
       )
       setToast(`Updated job role: ${title}`)
     } else {
       const newJob: EducationJob = {
-        id: `job-${Date.now()}`,
+        id: slug,
         title,
         institution,
         location,
         role,
-        type: "Full time",
+        type,
         posted: "Today",
         closes,
-        summary: `${title} position at ${institution}.`,
+        summary,
+        salary,
+        applicationEmail,
+        applicationUrl,
       }
       setJobsList((current) => [newJob, ...current])
       setToast(`Posted new vacancy for ${title}`)
     }
     setActiveModal(null)
     setSelectedJob(null)
+
+    if (hasPublicSupabaseConfig()) {
+      const supabase = createClient()
+      const { data: authData } = await supabase.auth.getUser()
+      const { error } = await supabase.from("jobs").upsert({
+        slug,
+        title: { en: title, pt: "" },
+        description: { en: summary, pt: "" },
+        summary: { en: summary, pt: "" },
+        institution,
+        location,
+        category: role,
+        employment_type: type,
+        salary,
+        application_email: applicationEmail || null,
+        application_url: applicationUrl || null,
+        closes_at: closes || null,
+        status: "published",
+        updated_by: authData.user?.id,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "slug" })
+      setToast(error ? `Vacancy could not be saved: ${error.message}` : `${title} is published`)
+    }
   }
 
   function deleteJob(id: string) {
@@ -573,13 +901,13 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
     setToast("Reply dispatched to reader")
   }
 
-  function toggleEnquiryStar(id: number) {
+  function toggleEnquiryStar(id: string | number) {
     setEnquiryList((current) =>
       current.map((item) => (item.id === id ? { ...item, starred: !item.starred } : item))
     )
   }
 
-  function toggleEnquiryUnread(id: number) {
+  function toggleEnquiryUnread(id: string | number) {
     setEnquiryList((current) =>
       current.map((item) => (item.id === id ? { ...item, unread: !item.unread } : item))
     )
@@ -809,6 +1137,13 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
           />
         ) : null}
 
+        {view === "magazines" ? (
+          <MagazinesView
+            records={magazineList}
+            onAdd={() => setActiveModal("add-magazine")}
+          />
+        ) : null}
+
         {view === "jobs" ? (
           <JobsView
             records={filteredJobs}
@@ -938,6 +1273,20 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
                 />
               </label>
 
+              <label><span>Latitude</span><input name="latitude" type="number" step="0.000001" defaultValue={selectedSchool?.latitude ?? ""} placeholder="38.722252" /></label>
+              <label><span>Longitude</span><input name="longitude" type="number" step="0.000001" defaultValue={selectedSchool?.longitude ?? ""} placeholder="-9.139337" /></label>
+              <label><span>Tuition from (€ / year)</span><input name="tuitionFrom" type="number" min="0" defaultValue={selectedSchool?.tuitionFrom ?? ""} /></label>
+              <label><span>Tuition to (€ / year)</span><input name="tuitionTo" type="number" min="0" defaultValue={selectedSchool?.tuitionTo ?? ""} /></label>
+              <label><span>Fee year</span><input name="feeYear" defaultValue={selectedSchool?.feeYear ?? "2026/27"} /></label>
+              <label><span>Telephone</span><input name="telephone" type="tel" defaultValue={selectedSchool?.telephone ?? ""} /></label>
+              <label><span>Website</span><input name="websiteUrl" type="url" defaultValue={selectedSchool?.websiteUrl ?? ""} placeholder="https://" /></label>
+              <label><span>Admissions email</span><input name="admissionsEmail" type="email" defaultValue={selectedSchool?.admissionsEmail ?? ""} /></label>
+              <label className="admin-field-wide"><span>Stages (comma separated)</span><input name="stages" defaultValue={selectedSchool?.stages.join(", ") ?? "Primary, Secondary"} /></label>
+              <label className="admin-field-wide"><span>Curricula (comma separated)</span><input name="curriculum" defaultValue={selectedSchool?.curriculum.join(", ") ?? "IB"} /></label>
+              <label className="admin-field-wide"><span>Teaching languages (comma separated)</span><input name="languages" defaultValue={selectedSchool?.languages.join(", ") ?? "English, Portuguese"} /></label>
+              <label className="admin-field-wide"><span>Support services (comma separated)</span><input name="support" defaultValue={selectedSchool?.support.join(", ") ?? "Learning support"} /></label>
+              <label className="admin-field-wide"><span>Cover image URL</span><input name="image" defaultValue={selectedSchool?.image ?? ""} /></label>
+
               <label className="admin-field-wide"><span>Key Differentiator / Summary</span>
                 <textarea
                   name="differentiator"
@@ -1021,20 +1370,41 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
                 </select>
               </label>
 
+              <label><span>Employment type</span>
+                <select name="employmentType" defaultValue={selectedJob?.type || "Full time"}>
+                  <option value="Full time">Full time</option>
+                  <option value="Part time">Part time</option>
+                  <option value="Fixed term">Fixed term</option>
+                  <option value="Contract">Contract</option>
+                </select>
+              </label>
+
               <label><span>Closes Date</span>
                 <input
                   name="closes"
-                  defaultValue={selectedJob?.closes || "31 August 2026"}
-                  placeholder="e.g. 31 August 2026"
+                  type="date"
+                  defaultValue={selectedJob?.closes && /^\d{4}-\d{2}-\d{2}$/.test(selectedJob.closes) ? selectedJob.closes : ""}
                 />
               </label>
 
               <label className="admin-field-wide"><span>Salary & Package</span>
                 <input
                   name="salary"
-                  defaultValue="Competitive international package"
+                  defaultValue={selectedJob?.salary || "Competitive international package"}
                   placeholder="e.g. €45,000 - €55,000 + benefits"
                 />
+              </label>
+
+              <label className="admin-field-wide"><span>Role summary</span>
+                <textarea name="summary" rows={4} defaultValue={selectedJob?.summary || ""} required />
+              </label>
+
+              <label><span>Application email</span>
+                <input name="applicationEmail" type="email" defaultValue={selectedJob?.applicationEmail || ""} />
+              </label>
+
+              <label><span>Application URL</span>
+                <input name="applicationUrl" type="url" defaultValue={selectedJob?.applicationUrl || ""} placeholder="https://" />
               </label>
 
               <div className="admin-dialog-actions admin-field-wide">
@@ -1047,6 +1417,41 @@ function AdminDashboard({ onSignOut, welcome }: { onSignOut: () => void; welcome
                   <Save aria-hidden="true" />
                   {selectedJob ? "Save vacancy" : "Publish vacancy"}
                 </button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root
+        open={activeModal === "add-magazine"}
+        onOpenChange={(open) => !open && setActiveModal(null)}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="admin-dialog-overlay" />
+          <Dialog.Content className="admin-dialog">
+            <div className="admin-dialog-head">
+              <div>
+                <span className="admin-kicker">Digital library</span>
+                <Dialog.Title>Add magazine edition</Dialog.Title>
+              </div>
+              <Dialog.Close asChild><button type="button" aria-label="Close dialog"><X aria-hidden="true" /></button></Dialog.Close>
+            </div>
+            <Dialog.Description>Add the cover and PDF or link used by readers.</Dialog.Description>
+            <form onSubmit={handleSaveMagazine} className="admin-form-grid">
+              <label className="admin-field-wide"><span>Edition title</span><input name="title" required /></label>
+              <label><span>Issue number</span><input name="issueNumber" required placeholder="03" /></label>
+              <label><span>Cover date</span><input name="coverDate" type="date" /></label>
+              <label className="admin-field-wide"><span>Description</span><textarea name="description" rows={3} required /></label>
+              <label className="admin-field-wide"><span>Cover image URL</span><input name="coverImageUrl" type="url" placeholder="https://..." /></label>
+              <label className="admin-field-wide"><span>Magazine PDF URL</span><input name="documentUrl" type="url" placeholder="https://.../edition.pdf" /></label>
+              <label className="admin-field-wide"><span>External digital reader URL</span><input name="externalReaderUrl" type="url" placeholder="https://..." /></label>
+              <label><span>Status</span><select name="status"><option value="draft">Draft</option><option value="published">Published</option></select></label>
+              <label className="admin-check-label"><input name="featured" type="checkbox" /><span>Latest featured edition</span></label>
+              <label className="admin-check-label"><input name="allowDownload" type="checkbox" defaultChecked /><span>Allow PDF download</span></label>
+              <div className="admin-dialog-actions admin-field-wide">
+                <Dialog.Close asChild><button className="admin-button admin-button-quiet" type="button">Cancel</button></Dialog.Close>
+                <button className="admin-button admin-button-primary" type="submit"><Save aria-hidden="true" />Save edition</button>
               </div>
             </form>
           </Dialog.Content>
@@ -1631,8 +2036,60 @@ function ArticleEditor({
   onSave: () => void
   onPreview: () => void
 }) {
+  const [locale, setLocale] = useState<"en" | "pt">("en")
+  const [translating, setTranslating] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const update = (field: keyof EditableArticle, value: string) =>
     setArticle({ ...article, [field]: value })
+
+  const fields = locale === "en"
+    ? { title: "title", excerpt: "excerpt", body: "body", seoTitle: "seoTitle", seoDescription: "seoDescription" } as const
+    : { title: "titlePt", excerpt: "excerptPt", body: "bodyPt", seoTitle: "seoTitlePt", seoDescription: "seoDescriptionPt" } as const
+
+  async function translateToPortuguese() {
+    setTranslating(true)
+    try {
+      const response = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: article.title, excerpt: article.excerpt, body: article.body }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "Translation failed")
+      setArticle({
+        ...article,
+        titlePt: result.title,
+        excerptPt: result.excerpt,
+        bodyPt: result.body,
+        seoTitlePt: result.title,
+        seoDescriptionPt: result.excerpt,
+      })
+      setLocale("pt")
+    } catch {
+      window.alert("AI translation is not connected yet. Add OPENAI_API_KEY to enable it.")
+    } finally {
+      setTranslating(false)
+    }
+  }
+
+  async function uploadHero(file: File) {
+    if (!hasPublicSupabaseConfig()) return
+    setUploading(true)
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg"
+    const path = `articles/${article.slug}/${crypto.randomUUID()}.${extension}`
+    const supabase = createClient()
+    const { error } = await supabase.storage.from("editorial-images").upload(path, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+    })
+    if (!error) {
+      const { data } = supabase.storage.from("editorial-images").getPublicUrl(path)
+      update("image", data.publicUrl)
+    } else {
+      window.alert(error.message)
+    }
+    setUploading(false)
+  }
 
   // Insert helper into body
   function insertFormat(snippet: string) {
@@ -1666,6 +2123,14 @@ function ArticleEditor({
         <p>Last saved {article.updated.toLowerCase()} · Approx. {wordCount} words</p>
       </div>
 
+      <div className="admin-language-bar" role="group" aria-label="Article language">
+        <button className={locale === "en" ? "active" : ""} type="button" onClick={() => setLocale("en")}>English</button>
+        <button className={locale === "pt" ? "active" : ""} type="button" onClick={() => setLocale("pt")}>Português</button>
+        <button type="button" onClick={translateToPortuguese} disabled={translating || !article.body.trim()}>
+          <Languages aria-hidden="true" /> {translating ? "Translating…" : "Create Portuguese draft with AI"}
+        </button>
+      </div>
+
       <div className="admin-editor-layout">
         <section className="admin-editor-canvas" aria-label="Article content">
           <div className="admin-form-grid">
@@ -1673,8 +2138,8 @@ function ArticleEditor({
               <span>Article title</span>
               <textarea
                 rows={2}
-                value={article.title}
-                onChange={(event) => update("title", event.target.value)}
+                value={article[fields.title]}
+                onChange={(event) => update(fields.title, event.target.value)}
               />
             </label>
 
@@ -1704,8 +2169,8 @@ function ArticleEditor({
               <span>Excerpt (Lead paragraph)</span>
               <textarea
                 rows={3}
-                value={article.excerpt}
-                onChange={(event) => update("excerpt", event.target.value)}
+                value={article[fields.excerpt]}
+                onChange={(event) => update(fields.excerpt, event.target.value)}
               />
             </label>
           </div>
@@ -1732,6 +2197,20 @@ function ArticleEditor({
                 <ImagePlus aria-hidden="true" />
                 Cycle preset image
               </button>
+              <label className="admin-image-upload">
+                <ImagePlus aria-hidden="true" />
+                {uploading ? "Uploading…" : "Upload image"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) void uploadHero(file)
+                  }}
+                />
+              </label>
+
             </div>
           </div>
 
@@ -1767,8 +2246,8 @@ function ArticleEditor({
             <span>Body copy</span>
             <textarea
               rows={12}
-              value={article.body}
-              onChange={(event) => update("body", event.target.value)}
+              value={article[fields.body]}
+              onChange={(event) => update(fields.body, event.target.value)}
             />
           </label>
         </section>
@@ -1777,6 +2256,16 @@ function ArticleEditor({
         <aside className="admin-editor-controls">
           <div className="admin-control-card">
             <h2>Publishing controls</h2>
+            <label>
+              <span>External article links</span>
+              <select
+                value={article.linkPolicy}
+                onChange={(event) => update("linkPolicy", event.target.value)}
+              >
+                <option value="follow">Follow links allowed</option>
+                <option value="nofollow">Mark external links nofollow</option>
+              </select>
+            </label>
             <label>
               <span>Status</span>
               <select
@@ -1799,18 +2288,18 @@ function ArticleEditor({
           <div className="admin-control-card">
             <h2>Search details (SEO)</h2>
             <label>
-              <span>SEO Title ({article.seoTitle.length}/60)</span>
+              <span>SEO Title ({article[fields.seoTitle].length}/60)</span>
               <input
-                value={article.seoTitle}
-                onChange={(event) => update("seoTitle", event.target.value)}
+                value={article[fields.seoTitle]}
+                onChange={(event) => update(fields.seoTitle, event.target.value)}
               />
             </label>
             <label>
-              <span>Meta Description ({article.seoDescription.length}/160)</span>
+              <span>Meta Description ({article[fields.seoDescription].length}/160)</span>
               <textarea
                 rows={3}
-                value={article.seoDescription}
-                onChange={(event) => update("seoDescription", event.target.value)}
+                value={article[fields.seoDescription]}
+                onChange={(event) => update(fields.seoDescription, event.target.value)}
               />
             </label>
           </div>
@@ -1941,6 +2430,44 @@ function DirectoryView({
         ) : (
           <EmptyMessage title="No listings found" copy="Try another name, region or provider type." />
         )}
+      </section>
+    </>
+  )
+}
+
+function MagazinesView({
+  records,
+  onAdd,
+}: {
+  records: EditableMagazine[]
+  onAdd: () => void
+}) {
+  return (
+    <>
+      <PageHeading
+        eyebrow="Digital publication library"
+        title="Magazines"
+        copy="Publish new editions, control downloads, and keep the latest digital issue prominent on the website."
+        action={<button className="admin-button admin-button-primary" type="button" onClick={onAdd}><Plus aria-hidden="true" />Add edition</button>}
+      />
+      <section className="admin-magazine-grid">
+        {records.map((magazine) => (
+          <article key={magazine.slug}>
+            <div className="admin-magazine-cover">
+              {magazine.coverImageUrl ? <Image src={magazine.coverImageUrl} alt="" fill sizes="240px" /> : <BookOpen aria-hidden="true" />}
+            </div>
+            <div>
+              <span className="admin-kicker">Issue {magazine.issueNumber}</span>
+              <h2>{magazine.title}</h2>
+              <p>{magazine.description}</p>
+              <div className="admin-magazine-meta">
+                <StatusPill tone={magazine.status === "Published" ? "success" : "warning"}>{magazine.status}</StatusPill>
+                {magazine.featured ? <StatusPill>Featured</StatusPill> : null}
+                {magazine.documentUrl || magazine.externalReaderUrl ? <a href={magazine.externalReaderUrl || magazine.documentUrl} target="_blank" rel="noreferrer">Open edition</a> : <span>Reader link pending</span>}
+              </div>
+            </div>
+          </article>
+        ))}
       </section>
     </>
   )
@@ -2157,8 +2684,8 @@ function EnquiriesView({
   onSelect: (item: Enquiry) => void
   onReplyTextChange: (v: string) => void
   onSendReply: () => void
-  onToggleStar: (id: number) => void
-  onToggleUnread: (id: number) => void
+  onToggleStar: (id: string | number) => void
+  onToggleUnread: (id: string | number) => void
   onCompose: () => void
 }) {
   return (

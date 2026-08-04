@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { articles } from "@/lib/education-data"
+import { getPublishedArticles, getPublishedMagazines } from "@/features/content/published-content"
 
 export const metadata: Metadata = {
   title: "Magazine",
@@ -11,7 +11,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/magazine" },
 }
 
-export default function MagazinePage() {
+export default async function MagazinePage() {
+  const [articles, magazines] = await Promise.all([
+    getPublishedArticles(),
+    getPublishedMagazines(),
+  ])
+  const featured = magazines.find((edition) => edition.featured) ?? magazines[0]
   return (
     <main id="main-content" className="magazine-page">
       <section className="magazine-page-hero">
@@ -24,14 +29,38 @@ export default function MagazinePage() {
             </p>
           </div>
           <Image
-            src="/education/magazine-edition-2.png"
-            alt="Education in Portugal magazine edition two"
+            src={featured?.coverImageUrl || "/education/magazine-edition-2.png"}
+            alt={featured?.title || "Education in Portugal magazine edition two"}
             width={420}
             height={590}
             priority
           />
         </div>
       </section>
+      {magazines.length ? (
+        <section className="digital-editions">
+          <div className="shell">
+            <p className="eyebrow">Digital editions</p>
+            <h2>Read the magazine online.</h2>
+            <div className="digital-editions-grid">
+              {magazines.map((edition) => {
+                const href = edition.externalReaderUrl || edition.documentUrl
+                return (
+                  <article key={edition.id}>
+                    <Image src={edition.coverImageUrl} alt={edition.title} width={240} height={338} />
+                    <div>
+                      <span>Issue {edition.issueNumber}</span>
+                      <h3>{edition.title}</h3>
+                      <p>{edition.description}</p>
+                      {href ? <a className="button button-primary" href={href} target="_blank" rel="noreferrer">Read digital edition <ArrowRight aria-hidden="true" /></a> : null}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className="magazine-index">
         <div className="shell">
           <h2>Latest writing</h2>

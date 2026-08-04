@@ -17,8 +17,8 @@ import {
   X,
 } from "lucide-react"
 import { FormEvent, useMemo, useState } from "react"
-import { trackEvent } from "@/lib/analytics"
-import { jobs } from "@/lib/education-data"
+import { jobs, type EducationJob } from "@/features/content/fallback-data"
+import { trackEvent } from "@/features/shared/analytics"
 
 type JobInterestValues = {
   name: string
@@ -34,9 +34,11 @@ type JobFilterValues = Record<JobFilterKey, string>
 function JobFilterControls({
   values,
   onChange,
+  listings,
 }: {
   values: JobFilterValues
   onChange: (filter: JobFilterKey, value: string) => void
+  listings: EducationJob[]
 }) {
   return (
     <div className="job-filter-controls">
@@ -69,7 +71,7 @@ function JobFilterControls({
           onChange={(event) => onChange("institution", event.target.value)}
         >
           <option value="">Every institution</option>
-          {Array.from(new Set(jobs.map((job) => job.institution))).map((name) => (
+          {Array.from(new Set(listings.map((job) => job.institution))).map((name) => (
             <option key={name}>{name}</option>
           ))}
         </select>
@@ -87,7 +89,7 @@ function JobFilterControls({
   )
 }
 
-export function JobsExplorer() {
+export function JobsExplorer({ listings = jobs }: { listings?: EducationJob[] }) {
   const [query, setQuery] = useState("")
   const [locationQuery, setLocationQuery] = useState("")
   const [committedQuery, setCommittedQuery] = useState("")
@@ -119,7 +121,7 @@ export function JobsExplorer() {
   const results = useMemo(() => {
     const normalizedQuery = committedQuery.toLowerCase()
     const normalizedPlace = committedLocation.toLowerCase()
-    return jobs.filter((job) => {
+    return listings.filter((job) => {
       const searchable = `${job.title} ${job.institution} ${job.role} ${job.summary}`.toLowerCase()
       return (
         (!normalizedQuery || searchable.includes(normalizedQuery)) &&
@@ -130,7 +132,7 @@ export function JobsExplorer() {
         (!type || job.type === type)
       )
     })
-  }, [committedLocation, committedQuery, institution, location, role, type])
+  }, [committedLocation, committedQuery, institution, listings, location, role, type])
 
   function resetJobs() {
     setQuery("")
@@ -274,7 +276,7 @@ export function JobsExplorer() {
                     </Dialog.Close>
                   </div>
                   <div className="drawer-content job-filter-drawer-content">
-                    <JobFilterControls values={jobFilterValues} onChange={selectChanged} />
+                    <JobFilterControls values={jobFilterValues} onChange={selectChanged} listings={listings} />
                   </div>
                   <div className="drawer-footer">
                     <button className="button button-quiet" type="button" onClick={resetJobs}>
@@ -310,7 +312,7 @@ export function JobsExplorer() {
             <aside className="jobs-filter-panel" aria-label="Filter job listings">
               <p className="eyebrow">Refine roles</p>
               <h2>Shape your search</h2>
-              <JobFilterControls values={jobFilterValues} onChange={selectChanged} />
+              <JobFilterControls values={jobFilterValues} onChange={selectChanged} listings={listings} />
               {activeJobFilters.length ? (
                 <button className="clear-jobs" type="button" onClick={resetJobs}>
                   Clear filters

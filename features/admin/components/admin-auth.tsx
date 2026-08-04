@@ -1,12 +1,10 @@
 "use client"
 
-import { ArrowLeft, Check, Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
-
-const accessEmail = "editor@educationinportugal.com"
-const accessPassword = "Portugal2026"
+import { createClient } from "@/lib/supabase/browser"
 
 export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("")
@@ -15,23 +13,29 @@ export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  function useAccessCredentials() {
-    setEmail(accessEmail)
-    setPassword(accessPassword)
-    setError("")
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-
-    if (email.trim().toLowerCase() !== accessEmail || password !== accessPassword) {
-      setError("Those details do not match the access credentials. Use the credentials shown below and try again.")
-      return
-    }
-
     setSubmitting(true)
-    window.setTimeout(onSuccess, 550)
+
+    try {
+      const supabase = createClient()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+
+      if (signInError) {
+        setError("Those details could not be authenticated. Check your editorial account and try again.")
+        setSubmitting(false)
+        return
+      }
+
+      onSuccess()
+    } catch {
+      setError("Supabase authentication has not been configured for this deployment yet.")
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -120,19 +124,11 @@ export function AdminAuth({ onSuccess }: { onSuccess: () => void }) {
             </button>
           </form>
 
-          <aside className="admin-auth-credentials" aria-label="Access credentials">
+          <aside className="admin-auth-credentials" aria-label="Editorial access help">
             <div>
-              <span>Access credentials</span>
-              <p>Use the editorial access details below to enter this private workspace.</p>
+              <span>Editorial access</span>
+              <p>Accounts are managed securely through Supabase. Ask an administrator to invite you if you do not yet have access.</p>
             </div>
-            <dl>
-              <div><dt>Email</dt><dd>{accessEmail}</dd></div>
-              <div><dt>Password</dt><dd>{accessPassword}</dd></div>
-            </dl>
-            <button type="button" onClick={useAccessCredentials}>
-              <Check aria-hidden="true" />
-              Use access credentials
-            </button>
           </aside>
         </div>
       </section>

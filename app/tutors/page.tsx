@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { DirectoryExplorer } from "@/components/education/directory-explorer"
+import { DirectoryExplorer } from "@/features/schools/components/directory-explorer"
 
 export const metadata: Metadata = {
   title: "Tutors and learning support",

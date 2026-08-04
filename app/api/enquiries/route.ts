@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { captureLead } from "@/features/leads/capture-lead"
 
 type EnquiryPayload = {
   name: string
@@ -87,6 +88,23 @@ export async function POST(request: Request) {
     )
   }
 
+  const lead = await captureLead({
+    reference,
+    source: "school_enquiry",
+    sourcePath: `/schools/${body.listing}`,
+    name: body.name,
+    email: body.email,
+    subject: `${body.enquiryType}: ${body.listing}`,
+    message: body.message,
+    consent: body.consent,
+    metadata: {
+      listing: body.listing,
+      enquiryType: body.enquiryType,
+      childAge: body.childAge,
+      startDate: body.startDate,
+    },
+  })
+
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.ENQUIRY_FROM_EMAIL
   const admissionsRecipient =
@@ -99,6 +117,7 @@ export async function POST(request: Request) {
         ok: false,
         code: "DELIVERY_NOT_CONFIGURED",
         error: "Online admissions delivery is not connected in this build.",
+        leadCaptured: lead.captured,
         reference,
       },
       { status: 503 },
@@ -177,6 +196,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       deliveryStatus: "sent",
+      leadCaptured: lead.captured,
       reference,
     })
   } catch {

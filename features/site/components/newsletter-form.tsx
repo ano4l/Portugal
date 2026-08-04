@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check } from "lucide-react"
 import { FormEvent, useState } from "react"
-import { trackEvent } from "@/lib/analytics"
+import { trackEvent } from "@/features/shared/analytics"
 
 export function NewsletterForm({ compact = false }: { compact?: boolean }) {
   const [email, setEmail] = useState("")

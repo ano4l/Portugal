@@ -5992,3 +5992,11 @@ dd {
     width: 100%;
   }
 }
+.digital-editions { padding: clamp(4rem, 8vw, 7rem) 0; background: #f4ede4; }
+.digital-editions h2 { margin: .4rem 0 2rem; }
+.digital-editions-grid { display: grid; gap: 1.25rem; }
+.digital-editions-grid article { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: clamp(1.2rem, 4vw, 3rem); align-items: center; padding: 1.2rem; border-top: 1px solid rgba(114,29,43,.22); }
+.digital-editions-grid img { width: 100%; height: auto; box-shadow: 0 18px 38px rgba(69,16,24,.14); }
+.digital-editions-grid h3 { margin: .45rem 0; font-size: clamp(1.5rem, 3vw, 2.4rem); }
+.digital-editions-grid p { max-width: 56ch; }
+@media (max-width: 620px) { .digital-editions-grid article { grid-template-columns: 1fr; } .digital-editions-grid img { max-width: 220px; } }

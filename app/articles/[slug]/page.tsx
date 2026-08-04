@@ -3,7 +3,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { notFound } from "next/navigation"
-import { articles } from "@/lib/education-data"
+import { articles } from "@/features/content/fallback-data"
+import { getPublishedArticles } from "@/features/content/published-content"
 
 export function generateStaticParams() {
   return articles.map((article) => ({ slug: article.slug }))
@@ -15,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const article = articles.find((item) => item.slug === slug)
+  const article = (await getPublishedArticles()).find((item) => item.slug === slug)
   if (!article) return {}
 
   return {
@@ -32,10 +33,11 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const article = articles.find((item) => item.slug === slug)
+  const publishedArticles = await getPublishedArticles()
+  const article = publishedArticles.find((item) => item.slug === slug)
   if (!article) notFound()
 
-  const related = articles.filter((item) => item.slug !== article.slug).slice(0, 2)
+  const related = publishedArticles.filter((item) => item.slug !== article.slug).slice(0, 2)
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -79,6 +81,10 @@ export default async function ArticlePage({
           />
         </div>
         <div className="article-body shell">
+          {article.body ? article.body.split(/\n\s*\n/).map((paragraph, index) => (
+            <p key={`${article.slug}-${index}`}>{paragraph}</p>
+          )) : (
+            <>
           <p>
             Choosing education in Portugal becomes easier when the practical
             questions come first. Think about the school day, travel time,
@@ -106,6 +112,8 @@ export default async function ArticlePage({
             Use our directory to compare the details, then contact the school
             directly for current admissions information.
           </p>
+            </>
+          )}
           <Link className="button button-primary" href="/directory">
             Explore the directory <ArrowRight aria-hidden="true" />
           </Link>

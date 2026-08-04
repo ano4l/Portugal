@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
-import { JobsExplorer } from "@/components/education/jobs-explorer"
-import { jobs } from "@/lib/education-data"
+import { getPublishedJobs } from "@/features/content/published-content"
+import { JobsExplorer } from "@/features/jobs/components/jobs-explorer"
 
 export const metadata: Metadata = {
   title: "Education jobs in Portugal",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/jobs" },
 }
 
-const jobsJsonLd = jobs.map((job) => ({
+function createJobsJsonLd(jobs: Awaited<ReturnType<typeof getPublishedJobs>>) { return jobs.map((job) => ({
   "@context": "https://schema.org",
   "@type": "JobPosting",
   title: job.title,
@@ -29,16 +29,18 @@ const jobsJsonLd = jobs.map((job) => ({
       addressCountry: "PT",
     },
   },
-}))
+})) }
 
-export default function JobsPage() {
+export default async function JobsPage() {
+  const jobs = await getPublishedJobs()
+  const jobsJsonLd = createJobsJsonLd(jobs)
   return (
     <main id="main-content">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobsJsonLd) }}
       />
-      <JobsExplorer />
+      <JobsExplorer listings={jobs} />
     </main>
   )
 }

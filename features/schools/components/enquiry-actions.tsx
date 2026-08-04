@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react"
 import { FormEvent, useEffect, useState } from "react"
-import { trackEvent } from "@/lib/analytics"
+import { trackEvent } from "@/features/shared/analytics"
 
 type EnquiryMode = "Enquire" | "Request information" | "Book a visit"
 

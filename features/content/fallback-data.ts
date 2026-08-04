@@ -12,6 +12,15 @@ export type SchoolListing = {
   image: string
   verified: boolean
   featured?: boolean
+  tuitionFrom?: number
+  tuitionTo?: number
+  latitude?: number
+  longitude?: number
+  websiteUrl?: string
+  admissionsEmail?: string
+  telephone?: string
+  feeYear?: string
+  prospectusUrl?: string
 }
 
 export const schools: SchoolListing[] = [
@@ -167,6 +176,10 @@ export type EducationJob = {
   closes: string
   summary: string
   featured?: boolean
+  salary?: string
+  applicationEmail?: string
+  applicationUrl?: string
+  descriptionPt?: string
 }
 
 export const jobs: EducationJob[] = [

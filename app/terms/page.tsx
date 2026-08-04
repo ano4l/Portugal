@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { InformationPage } from "@/components/education/information-page"
+import { InformationPage } from "@/features/site/components/information-page"
 
 export const metadata: Metadata = {
   title: "Terms",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Cormorant_Garamond, Manrope } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { SiteShell } from "@/components/education/site-shell"
+import { SiteShell } from "@/features/site/components/site-shell"
 import "./globals.css"
 
 const display = Cormorant_Garamond({

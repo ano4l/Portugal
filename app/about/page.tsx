@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { InformationPage } from "@/components/education/information-page"
+import { InformationPage } from "@/features/site/components/information-page"
 
 export const metadata: Metadata = {
   title: "About",

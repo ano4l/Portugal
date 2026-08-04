@@ -27,6 +27,9 @@ yarn-error.log*
 *.log
 /artifacts/
 /qa-*.png
+/.lighthouseci/
+/test-results/
+/tmp/
 
 # unused v0 prototype sources and placeholder media kept locally
 /components/fullpage-loader.tsx

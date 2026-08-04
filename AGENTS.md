@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a Next.js 16 App Router application. Route entry points, metadata, legal pages, and the enquiry API live in `app/`. The production site UI is isolated in `components/education/`; older prototype components elsewhere under `components/` are intentionally excluded from TypeScript compilation and should not be reused for the editorial experience. Shared school, job, and article content is defined in `lib/education-data.ts`, while interaction telemetry helpers live in `lib/analytics.ts`. Production imagery is local under `public/education/`.
+This is a Next.js 16 App Router application. Route entry points, metadata, legal pages, and APIs live in `app/`. Product code is grouped by responsibility under `features/`: `content`, `schools`, `jobs`, `leads`, `site`, and `shared`. Supabase infrastructure helpers live in `lib/supabase/`, versioned SQL lives in `supabase/migrations/`, and production imagery is local under `public/education/`.
 
 ## Build, Test, and Development Commands
 
@@ -16,7 +16,7 @@ There is no automated unit-test suite in this repository. Treat `pnpm typecheck`
 
 ## Coding Style & Naming Conventions
 
-TypeScript strict mode is enabled. Follow the established formatting: double quotes, no semicolons, two-space indentation, and trailing commas in multiline structures. Use PascalCase for React components, camelCase for functions and state, and kebab-case filenames. Keep server-rendered pages as the default; add `"use client"` only to interactive leaves. Reuse the existing Lucide icon family and the motion/reduced-motion conventions in `components/education/`.
+TypeScript strict mode is enabled. Follow the established formatting: double quotes, no semicolons, two-space indentation, and trailing commas in multiline structures. Use PascalCase for React components, camelCase for functions and state, and kebab-case filenames. Keep server-rendered pages as the default; add `"use client"` only to interactive leaves. Reuse the existing Lucide icon family and the motion/reduced-motion conventions in `features/`.
 
 ## Deployment & Environment
 

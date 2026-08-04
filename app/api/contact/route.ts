@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { captureLead } from "@/features/leads/capture-lead"
 
 type ContactPayload = {
   name: string
@@ -33,12 +34,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "A valid email address is required.", reference }, { status: 400 })
   }
 
+  const lead = await captureLead({
+    reference,
+    source: body.purpose === "advertise" ? "advertising_form" : "contact_form",
+    sourcePath: body.purpose === "advertise" ? "/advertise" : "/contact",
+    name: body.name,
+    email: body.email,
+    organisation: body.organisation,
+    subject: body.interest,
+    message: body.message,
+    consent: body.consent,
+  })
+
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.ENQUIRY_FROM_EMAIL
   const to = process.env.CONTACT_EMAIL ?? "info@educationinportugal.com"
 
   if (!apiKey || !from) {
-    return NextResponse.json({ ok: false, error: "Online message delivery is not connected in this build.", reference }, { status: 503 })
+    return NextResponse.json({ ok: false, leadCaptured: lead.captured, error: "Your enquiry was recorded, but email delivery is not connected yet.", reference }, { status: 503 })
   }
 
   let response: Response
@@ -76,5 +89,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "The message service did not accept this enquiry.", reference }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true, reference })
+  return NextResponse.json({ ok: true, leadCaptured: lead.captured, reference })
 }
