@@ -34,10 +34,23 @@ function Wordmark() {
 export function SiteHeader() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [language, setLanguage] = useState<"en" | "pt">("en")
 
   useEffect(() => {
     setMobileOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem("education-in-portugal-language")
+    if (savedLanguage === "en" || savedLanguage === "pt") {
+      setLanguage(savedLanguage)
+    }
+  }, [])
+
+  function changeLanguage(nextLanguage: "en" | "pt") {
+    setLanguage(nextLanguage)
+    window.localStorage.setItem("education-in-portugal-language", nextLanguage)
+  }
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href)
@@ -55,9 +68,17 @@ export function SiteHeader() {
               <Phone aria-hidden="true" size={14} />
               +351 282 341 100
             </a>
-            <span className="language-indicator" title="Language: English">
-              <span className="sr-only">Language: </span>EN
-            </span>
+            <label className="language-indicator">
+              <span className="sr-only">Website language</span>
+              <select
+                aria-label="Website language"
+                value={language}
+                onChange={(event) => changeLanguage(event.target.value as "en" | "pt")}
+              >
+                <option value="en">English</option>
+                <option value="pt">Português</option>
+              </select>
+            </label>
           </div>
         </div>
       </div>
@@ -130,6 +151,16 @@ export function SiteHeader() {
                 })}
               </nav>
               <div className="mobile-nav-foot">
+                <label className="mobile-language-select">
+                  <span>Language</span>
+                  <select
+                    value={language}
+                    onChange={(event) => changeLanguage(event.target.value as "en" | "pt")}
+                  >
+                    <option value="en">English</option>
+                    <option value="pt">Português</option>
+                  </select>
+                </label>
                 <Dialog.Close asChild>
                   <Link className="button button-coral" href="/directory">
                     Start your school search

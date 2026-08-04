@@ -414,7 +414,7 @@ dd {
 }
 
 .language-indicator {
-  min-width: 38px;
+  min-width: 86px;
   min-height: 30px;
   padding: 0;
   justify-content: center;
@@ -422,6 +422,44 @@ dd {
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
+}
+
+.language-indicator select {
+  max-width: 102px;
+  border: 0;
+  outline-offset: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.language-indicator option {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.mobile-language-select {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+  color: var(--maroon);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mobile-language-select select {
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .main-navigation {
